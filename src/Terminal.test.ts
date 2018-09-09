@@ -4,6 +4,7 @@
  */
 
 import { assert, expect } from 'chai';
+import * as sinon from 'sinon';
 import { Terminal } from './Terminal';
 import { MockViewport, MockCompositionHelper, MockRenderer } from './utils/TestUtils.test';
 import { CHAR_DATA_CHAR_INDEX, CHAR_DATA_WIDTH_INDEX, DEFAULT_ATTR } from './Buffer';
@@ -86,15 +87,7 @@ describe('term.js addons', () => {
     });
 
     describe(`keypress (including 'key' event)`, () => {
-      it('should receive a string and event object', (done) => {
-        let steps = 0;
-
-        const finish = () => {
-          if ((++steps) === 2) {
-            done();
-          }
-        };
-
+      it('should receive a string and an event object', () => {
         const evKeyPress = <KeyboardEvent>{
           preventDefault: () => { },
           stopPropagation: () => { },
@@ -102,32 +95,26 @@ describe('term.js addons', () => {
           keyCode: 13
         };
 
-        term.on('keypress', (key, event) => {
-          assert.equal(typeof key, 'string');
-          expect(event).to.be.an.instanceof(Object);
-          finish();
-        });
+        const spyKeypress = sinon.spy();
+        const spyKey = sinon.spy();
 
-        term.on('key', (key, event) => {
-          assert.equal(typeof key, 'string');
-          expect(event).to.be.an.instanceof(Object);
-          finish();
-        });
+        term.on('keypress', spyKeypress);
+        term.on('key', spyKey);
 
         term.keyPress(evKeyPress);
+
+        assert(spyKeypress.calledOnce, `'keypress' should be called once`);
+        assert.equal(typeof spyKeypress.args[0][0], 'string');
+        assert.equal(typeof spyKeypress.args[0][1], 'object');
+
+        assert(spyKey.calledOnce, `'key' should be called once`);
+        assert.equal(typeof spyKey.args[0][0], 'string');
+        assert.equal(typeof spyKey.args[0][1], 'object');
       });
     });
 
     describe(`keydown (including 'key' event)`, () => {
-      it(`should receive an event object for 'keydown' and a string and event object for 'key'`, (done) => {
-        let steps = 0;
-
-        const finish = () => {
-          if ((++steps) === 2) {
-            done();
-          }
-        };
-
+      it(`should receive an event object for 'keydown' and a string and an event object for 'key'`, () => {
         const evKeyDown = <KeyboardEvent>{
           preventDefault: () => { },
           stopPropagation: () => { },
@@ -135,18 +122,20 @@ describe('term.js addons', () => {
           keyCode: 13
         };
 
-        term.on('keydown', (event) => {
-          expect(event).to.be.an.instanceof(Object);
-          finish();
-        });
+        const spyKeydown = sinon.spy();
+        const spyKey = sinon.spy();
 
-        term.on('key', (key, event) => {
-          assert.equal(typeof key, 'string');
-          expect(event).to.be.an.instanceof(Object);
-          finish();
-        });
+        term.on('keydown', spyKeydown);
+        term.on('key', spyKey);
 
         term.keyDown(evKeyDown);
+
+        assert(spyKeydown.calledOnce, `'keydown' should be called once`);
+        assert.equal(typeof spyKeydown.args[0][0], 'object');
+
+        assert(spyKey.calledOnce, `'key' should be called once`);
+        assert.equal(typeof spyKey.args[0][0], 'string');
+        assert.equal(typeof spyKey.args[0][1], 'object');
       });
     });
 
